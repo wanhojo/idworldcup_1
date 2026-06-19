@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 월드컵 스타 이상형 월드컵</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f4f8;min-height:100vh;display:flex;justify-content:center;padding:1.5rem 1rem}
+  .app{width:100%;max-width:520px}
+  .header{text-align:center;margin-bottom:1rem}
+  .header h1{font-size:22px;font-weight:700;color:#0a1628}
+  .header p{font-size:13px;color:#7a8ba0;margin-top:4px}
+  .prog-wrap{background:#dde3ea;border-radius:99px;height:6px;margin:.75rem 0 .5rem;overflow:hidden}
+  .prog-fill{height:6px;background:linear-gradient(90deg,#185FA5,#2196F3);border-radius:99px;transition:width .4s}
+  .round-lbl{text-align:center;font-size:11px;font-weight:700;color:#7a8ba0;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}
+  .stats{display:flex;justify-content:center;gap:28px;margin-bottom:1rem}
+  .stat{text-align:center}
+  .stat-n{font-size:20px;font-weight:700;color:#0a1628}
+  .stat-l{font-size:11px;color:#7a8ba0}
+  .matchup{display:grid;grid-template-columns:1fr 36px 1fr;gap:10px;align-items:center}
+  .pbtn{background:#fff;border:1.5px solid #dde3ea;border-radius:18px;padding:16px 8px 14px;cursor:pointer;text-align:center;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .pbtn:hover{border-color:#185FA5;transform:translateY(-3px);box-shadow:0 6px 20px rgba(24,95,165,.15)}
+  .pbtn:active{transform:translateY(0)}
+  .pbtn.win{border:2.5px solid #185FA5;background:#EBF4FD;box-shadow:0 4px 16px rgba(24,95,165,.2)}
+  .pbtn.lose{opacity:.25;pointer-events:none}
+  .pname{font-size:13px;font-weight:700;color:#0a1628;line-height:1.3}
+  .pcountry{font-size:11px;color:#7a8ba0}
+  .vs{text-align:center;font-size:13px;font-weight:700;color:#b0bec5}
+  .hint{text-align:center;font-size:12px;color:#b0bec5;margin-top:10px}
+  .result-box{text-align:center;padding:2.5rem 1rem 2rem;background:#fff;border-radius:20px;border:1.5px solid #dde3ea;margin-top:.5rem;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+  .res-label{font-size:13px;color:#7a8ba0;margin-bottom:12px}
+  .res-name{font-size:26px;font-weight:700;color:#185FA5;margin:12px 0 4px}
+  .res-country{font-size:14px;color:#7a8ba0;margin-bottom:20px}
+  .trophy{font-size:48px;margin-bottom:8px}
+  .restart-btn{background:#185FA5;border:none;border-radius:12px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;transition:background .15s}
+  .restart-btn:hover{background:#0d4a8a}
+  @media(max-width:400px){.pname{font-size:12px}.pbtn{padding:12px 6px 10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>⚽ 월드컵 스타 이상형 월드컵</h1>
+    <p>전세계 64인의 슈퍼스타 · 2026 FIFA 월드컵</p>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div class="round-lbl" id="rlbl"></div>
+  <div class="stats" id="stats"></div>
+  <div id="area"></div>
+  <div class="hint" id="hint">더 마음에 드는 선수를 골라주세요!</div>
+</div>
+
+<script>
+// SVG avatar generator — each player has unique skin, hair, kit colors + number
+function makeSVG(p){
+  const s=p.skin, h=p.hair, k1=p.kit1, k2=p.kit2, n=p.num||'';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90" width="80" height="90">
+  <!-- shadow -->
+  <ellipse cx="40" cy="87" rx="18" ry="4" fill="#00000015"/>
+  <!-- body / kit -->
+  <path d="M20,52 Q16,50 14,60 L14,82 Q14,84 16,84 L26,84 L26,62 Z" fill="${k1}"/>
+  <path d="M60,52 Q64,50 66,60 L66,82 Q66,84 64,84 L54,84 L54,62 Z" fill="${k1}"/>
+  <path d="M26,48 L26,84 L54,84 L54,48 Q47,52 40,52 Q33,52 26,48 Z" fill="${k1}"/>
+  <!-- kit stripe -->
+  <rect x="36" y="52" width="8" height="32" fill="${k2}" opacity=".35"/>
+  <!-- number -->
+  <text x="40" y="73" text-anchor="middle" font-size="11" font-weight="bold" fill="${k2}" font-family="Arial">${n}</text>
+  <!-- neck -->
+  <rect x="36" y="42" width="8" height="10" fill="${s}" rx="2"/>
+  <!-- head -->
+  <ellipse cx="40" cy="36" rx="14" ry="16" fill="${s}"/>
+  <!-- hair -->
+  <ellipse cx="40" cy="22" rx="14" ry="10" fill="${h}"/>
+  <rect x="26" y="22" width="28" height="8" fill="${h}"/>
+  <!-- hair style detail -->
+  ${p.hairStyle||''}
+  <!-- ears -->
+  <ellipse cx="26" cy="37" rx="3" ry="4" fill="${s}"/>
+  <ellipse cx="54" cy="37" rx="3" ry="4" fill="${s}"/>
+  <!-- eyes -->
+  <ellipse cx="35" cy="36" rx="3" ry="3.5" fill="white"/>
+  <ellipse cx="45" cy="36" rx="3" ry="3.5" fill="white"/>
+  <circle cx="${p.eyeX1||35}" cy="37" r="2" fill="${p.eyeColor||'#3a2a1a'}"/>
+  <circle cx="${p.eyeX2||45}" cy="37" r="2" fill="${p.eyeColor||'#3a2a1a'}"/>
+  <circle cx="${(p.eyeX1||35)+0.6}" cy="36.2" r=".7" fill="white"/>
+  <circle cx="${(p.eyeX2||45)+0.6}" cy="36.2" r=".7" fill="white"/>
+  <!-- eyebrows -->
+  <path d="M32,31.5 Q35,30 38,31.5" stroke="${h}" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M42,31.5 Q45,30 48,31.5" stroke="${h}" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- nose -->
+  <ellipse cx="40" cy="41" rx="2" ry="1.5" fill="${s}" stroke="#00000020" stroke-width=".5"/>
+  <!-- mouth / smile -->
+  <path d="${p.mouth||'M36,46 Q40,49 44,46'}" stroke="#c0392b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- beard if any -->
+  ${p.beard||''}
+  <!-- flag badge -->
+  <text x="40" y="10" text-anchor="middle" font-size="13">${p.flag}</text>
+</svg>`;
+}
+
+const players = [
+  // ARGENTINA
+  {name:"리오넬 메시",country:"아르헨티나",flag:"🇦🇷",num:"10",skin:"#f5c89a",hair:"#3a2310",kit1:"#74ACDF",kit2:"#fff",
+    hairStyle:'<path d="M26,26 Q27,18 40,18 Q53,18 54,26" fill="#3a2310"/>',
+    beard:'<path d="M33,47 Q40,51 47,47" stroke="#3a2310" stroke-width="1.2" fill="none"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"에밀리아노 마르티네스",country:"아르헨티나",flag:"🇦🇷",num:"1",skin:"#f0c070",hair:"#1a1008",kit1:"#74ACDF",kit2:"#fff",
+    hairStyle:'<rect x="26" y="18" width="28" height="5" fill="#1a1008"/>'},
+  {name:"앙헬 디 마리아",country:"아르헨티나",flag:"🇦🇷",num:"11",skin:"#e8b880",hair:"#1a0a00",kit1:"#74ACDF",kit2:"#fff",
+    hairStyle:'<ellipse cx="40" cy="19" rx="13" ry="7" fill="#1a0a00"/>'},
+  {name:"파울로 디발라",country:"아르헨티나",flag:"🇦🇷",num:"21",skin:"#f0c888",hair:"#2a1a08",kit1:"#74ACDF",kit2:"#fff"},
+  // FRANCE
+  {name:"킬리안 음바페",country:"프랑스",flag:"🇫🇷",num:"10",skin:"#6b3a1f",hair:"#0d0806",kit1:"#002395",kit2:"#EF4135",
+    hairStyle:'<rect x="27" y="18" width="26" height="4" fill="#0d0806" rx="2"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"앙투안 그리즈만",country:"프랑스",flag:"🇫🇷",num:"7",skin:"#f5d0a0",hair:"#8b6914",kit1:"#002395",kit2:"#EF4135",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="6" fill="#8b6914"/><rect x="28" y="20" width="24" height="4" fill="#8b6914"/>'},
+  {name:"오우스만 뎀벨레",country:"프랑스",flag:"🇫🇷",num:"11",skin:"#7a4a28",hair:"#0d0806",kit1:"#002395",kit2:"#EF4135"},
+  {name:"마이클 올리스",country:"프랑스",flag:"🇫🇷",num:"14",skin:"#5a3018",hair:"#0d0806",kit1:"#002395",kit2:"#EF4135",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="7" fill="#0d0806"/>'},
+  {name:"아우렐리엔 추아메니",country:"프랑스",flag:"🇫🇷",num:"8",skin:"#5a3018",hair:"#0d0806",kit1:"#002395",kit2:"#EF4135"},
+  {name:"마르쿠스 튀람",country:"프랑스",flag:"🇫🇷",num:"9",skin:"#4a2510",hair:"#0d0806",kit1:"#002395",kit2:"#EF4135"},
+  // PORTUGAL
+  {name:"크리스티아누 호날두",country:"포르투갈",flag:"🇵🇹",num:"7",skin:"#d4956a",hair:"#0d0806",kit1:"#006600",kit2:"#EF4135",
+    hairStyle:'<path d="M30,20 Q40,15 50,20 L50,23 Q40,18 30,23Z" fill="#0d0806"/>',
+    beard:'<path d="M34,47 Q40,49 46,47" stroke="#0d0806" stroke-width="1" fill="none"/>',
+    mouth:'M37,46 Q40,49 43,46'},
+  {name:"브루노 페르난데스",country:"포르투갈",flag:"🇵🇹",num:"8",skin:"#e8b070",hair:"#2a1a08",kit1:"#006600",kit2:"#EF4135",
+    beard:'<ellipse cx="40" cy="47" rx="5" ry="2" fill="#2a1a08" opacity=".5"/>'},
+  {name:"라파엘 레오",country:"포르투갈",flag:"🇵🇹",num:"17",skin:"#7a4a28",hair:"#0d0806",kit1:"#006600",kit2:"#EF4135"},
+  {name:"루벤 디아스",country:"포르투갈",flag:"🇵🇹",num:"4",skin:"#e0a870",hair:"#1a1008",kit1:"#006600",kit2:"#EF4135",
+    hairStyle:'<rect x="27" y="17" width="26" height="6" fill="#1a1008" rx="3"/>'},
+  // SPAIN
+  {name:"라미네 야말",country:"스페인",flag:"🇪🇸",num:"19",skin:"#c87840",hair:"#0d0806",kit1:"#c60b1e",kit2:"#ffc400",
+    hairStyle:'<ellipse cx="40" cy="20" rx="13" ry="7" fill="#0d0806"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"로드리",country:"스페인",flag:"🇪🇸",num:"16",skin:"#e8b880",hair:"#2a1a08",kit1:"#c60b1e",kit2:"#ffc400",
+    beard:'<path d="M33,46 Q40,50 47,46" stroke="#2a1a08" stroke-width="1.5" fill="none"/>'},
+  {name:"페드리",country:"스페인",flag:"🇪🇸",num:"26",skin:"#f0c888",hair:"#3a2310",kit1:"#c60b1e",kit2:"#ffc400"},
+  {name:"가비",country:"스페인",flag:"🇪🇸",num:"9",skin:"#f5d0a0",hair:"#1a1008",kit1:"#c60b1e",kit2:"#ffc400",
+    hairStyle:'<ellipse cx="40" cy="19" rx="12" ry="6" fill="#1a1008"/>'},
+  {name:"알바로 모라타",country:"스페인",flag:"🇪🇸",num:"7",skin:"#f0c070",hair:"#2a1a08",kit1:"#c60b1e",kit2:"#ffc400",
+    beard:'<path d="M34,47 Q40,50 46,47" stroke="#2a1a08" stroke-width="1" fill="none"/>'},
+  // BRAZIL
+  {name:"비니시우스 주니오르",country:"브라질",flag:"🇧🇷",num:"7",skin:"#7a4a28",hair:"#0d0806",kit1:"#F7D116",kit2:"#009C3B",
+    hairStyle:'<ellipse cx="40" cy="20" rx="13" ry="8" fill="#0d0806"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"호드리구",country:"브라질",flag:"🇧🇷",num:"11",skin:"#c87840",hair:"#0d0806",kit1:"#F7D116",kit2:"#009C3B"},
+  {name:"엔드리크",country:"브라질",flag:"🇧🇷",num:"9",skin:"#8a5230",hair:"#0d0806",kit1:"#F7D116",kit2:"#009C3B",
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"네이마르",country:"브라질",flag:"🇧🇷",num:"10",skin:"#c87840",hair:"#0d0806",kit1:"#F7D116",kit2:"#009C3B",
+    hairStyle:'<path d="M28,20 Q40,14 52,20 L52,22 Q40,16 28,22Z" fill="#0d0806"/>'},
+  {name:"가브리엘 마르티넬리",country:"브라질",flag:"🇧🇷",num:"11",skin:"#b87040",hair:"#0d0806",kit1:"#F7D116",kit2:"#009C3B"},
+  // ENGLAND
+  {name:"해리 케인",country:"잉글랜드",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",num:"9",skin:"#f5d0a0",hair:"#c8a060",kit1:"#fff",kit2:"#012169",
+    beard:'<path d="M33,46 Q40,50 47,46" stroke="#c8a060" stroke-width="1" fill="none"/>'},
+  {name:"주드 벨링엄",country:"잉글랜드",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",num:"10",skin:"#8a5028",hair:"#0d0806",kit1:"#fff",kit2:"#012169",
+    hairStyle:'<rect x="27" y="17" width="26" height="7" fill="#0d0806" rx="3"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"부카요 사카",country:"잉글랜드",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",num:"7",skin:"#7a4a1a",hair:"#0d0806",kit1:"#fff",kit2:"#012169"},
+  {name:"필 포든",country:"잉글랜드",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",num:"47",skin:"#f5d0a0",hair:"#e8e0a0",kit1:"#fff",kit2:"#012169",
+    hairStyle:'<ellipse cx="40" cy="20" rx="13" ry="7" fill="#e8e0a0"/>'},
+  {name:"마르쿠스 라쇼포드",country:"잉글랜드",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",num:"10",skin:"#6a3a18",hair:"#0d0806",kit1:"#fff",kit2:"#012169"},
+  // GERMANY
+  {name:"자말 무시알라",country:"독일",flag:"🇩🇪",num:"10",skin:"#d4956a",hair:"#0d0806",kit1:"#fff",kit2:"#000",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="7" fill="#0d0806"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"플로리안 비르츠",country:"독일",flag:"🇩🇪",num:"10",skin:"#f5d0a0",hair:"#c8a060",kit1:"#fff",kit2:"#000",
+    hairStyle:'<path d="M28,22 Q33,16 40,17 Q47,16 52,22" fill="#c8a060" stroke="none"/>'},
+  {name:"토마스 뮐러",country:"독일",flag:"🇩🇪",num:"13",skin:"#f5c888",hair:"#c8a060",kit1:"#fff",kit2:"#000"},
+  {name:"레로이 사네",country:"독일",flag:"🇩🇪",num:"19",skin:"#7a4a28",hair:"#0d0806",kit1:"#fff",kit2:"#000"},
+  // NORWAY
+  {name:"에를링 홀란",country:"노르웨이",flag:"🇳🇴",num:"9",skin:"#fde0b0",hair:"#f0d878",kit1:"#EF2B2D",kit2:"#fff",
+    hairStyle:'<ellipse cx="40" cy="20" rx="13" ry="8" fill="#f0d878"/>',
+    mouth:'M35,46 Q40,51 45,46'},
+  {name:"마르틴 외데고르",country:"노르웨이",flag:"🇳🇴",num:"8",skin:"#f5d8a8",hair:"#e8c860",kit1:"#EF2B2D",kit2:"#fff"},
+  // NETHERLANDS
+  {name:"버질 반 다이크",country:"네덜란드",flag:"🇳🇱",num:"4",skin:"#5a3018",hair:"#0d0806",kit1:"#F36C21",kit2:"#fff",
+    hairStyle:'<rect x="27" y="17" width="26" height="7" fill="#0d0806" rx="3"/>'},
+  {name:"코디 각포",country:"네덜란드",flag:"🇳🇱",num:"11",skin:"#6a3a18",hair:"#0d0806",kit1:"#F36C21",kit2:"#fff"},
+  {name:"멤피스 데파이",country:"네덜란드",flag:"🇳🇱",num:"10",skin:"#8a5028",hair:"#0d0806",kit1:"#F36C21",kit2:"#fff",
+    beard:'<path d="M34,47 Q40,50 46,47" stroke="#0d0806" stroke-width="1.2" fill="none"/>'},
+  // BELGIUM
+  {name:"케빈 더브라위너",country:"벨기에",flag:"🇧🇪",num:"7",skin:"#f5c888",hair:"#e8d090",kit1:"#ED2939",kit2:"#000",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="6" fill="#e8d090"/>'},
+  {name:"로멜루 루카쿠",country:"벨기에",flag:"🇧🇪",num:"9",skin:"#4a2510",hair:"#0d0806",kit1:"#ED2939",kit2:"#000",
+    hairStyle:'<rect x="27" y="17" width="26" height="7" fill="#0d0806" rx="3"/>'},
+  // POLAND
+  {name:"로베르트 레반도프스키",country:"폴란드",flag:"🇵🇱",num:"9",skin:"#f5d0a0",hair:"#c8a870",kit1:"#fff",kit2:"#DC143C",
+    beard:'<path d="M34,47 Q40,50 46,47" stroke="#c8a870" stroke-width="1" fill="none"/>'},
+  // CROATIA
+  {name:"루카 모드리치",country:"크로아티아",flag:"🇭🇷",num:"10",skin:"#e8b070",hair:"#0d0806",kit1:"#CC0000",kit2:"#fff",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="7" fill="#0d0806"/>'},
+  {name:"이반 페리시치",country:"크로아티아",flag:"🇭🇷",num:"4",skin:"#e8b880",hair:"#2a1a08",kit1:"#CC0000",kit2:"#fff"},
+  // EGYPT
+  {name:"모하메드 살라",country:"이집트",flag:"🇪🇬",num:"11",skin:"#c87840",hair:"#0d0806",kit1:"#CE1126",kit2:"#fff",
+    beard:'<path d="M33,46 Q40,50 47,46" stroke="#0d0806" stroke-width="1.5" fill="none"/>'},
+  // SENEGAL
+  {name:"사디오 마네",country:"세네갈",flag:"🇸🇳",num:"10",skin:"#4a2510",hair:"#0d0806",kit1:"#00853F",kit2:"#fff",
+    hairStyle:'<rect x="27" y="17" width="26" height="6" fill="#0d0806" rx="3"/>'},
+  // ITALY
+  {name:"잔루이지 도나룸마",country:"이탈리아",flag:"🇮🇹",num:"1",skin:"#f0c070",hair:"#0d0806",kit1:"#003399",kit2:"#fff",
+    hairStyle:'<ellipse cx="40" cy="20" rx="13" ry="7" fill="#0d0806"/>'},
+  {name:"페데리코 키에사",country:"이탈리아",flag:"🇮🇹",num:"7",skin:"#f0c888",hair:"#3a2310",kit1:"#003399",kit2:"#fff"},
+  {name:"니콜로 바렐라",country:"이탈리아",flag:"🇮🇹",num:"23",skin:"#f0c888",hair:"#1a1008",kit1:"#003399",kit2:"#fff"},
+  // SWITZERLAND
+  {name:"그라닛 자카",country:"스위스",flag:"🇨🇭",num:"10",skin:"#e8b070",hair:"#0d0806",kit1:"#FF0000",kit2:"#fff",
+    beard:'<path d="M33,46 Q40,50 47,46" stroke="#0d0806" stroke-width="1.5" fill="none"/>'},
+  // USA
+  {name:"크리스티안 풀리식",country:"미국",flag:"🇺🇸",num:"10",skin:"#f5d0a0",hair:"#c8a060",kit1:"#002868",kit2:"#BF0A30",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="7" fill="#c8a060"/>'},
+  // TURKEY
+  {name:"아르다 귈러",country:"튀르키예",flag:"🇹🇷",num:"10",skin:"#e0a870",hair:"#1a1008",kit1:"#E30A17",kit2:"#fff",
+    hairStyle:'<path d="M28,22 Q33,15 40,16 Q47,15 52,22" fill="#1a1008"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  // ALGERIA
+  {name:"리야드 마흐레즈",country:"알제리",flag:"🇩🇿",num:"7",skin:"#e0a870",hair:"#0d0806",kit1:"#fff",kit2:"#006233"},
+  // MEXICO
+  {name:"기예르모 오초아",country:"멕시코",flag:"🇲🇽",num:"1",skin:"#d4956a",hair:"#0d0806",kit1:"#006847",kit2:"#fff"},
+  // KOREA
+  {name:"손흥민",country:"대한민국",flag:"🇰🇷",num:"7",skin:"#f0c888",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    hairStyle:'<rect x="27" y="17" width="26" height="7" fill="#0d0806" rx="3"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"이강인",country:"대한민국",flag:"🇰🇷",num:"10",skin:"#f5d0a0",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    hairStyle:'<path d="M28,22 Q33,15 40,16 Q47,15 52,22" fill="#0d0806"/>',
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"김민재",country:"대한민국",flag:"🇰🇷",num:"3",skin:"#f0c070",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    hairStyle:'<rect x="27" y="17" width="26" height="6" fill="#0d0806" rx="3"/>'},
+  {name:"황희찬",country:"대한민국",flag:"🇰🇷",num:"11",skin:"#f0c888",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff"},
+  {name:"황인범",country:"대한민국",flag:"🇰🇷",num:"8",skin:"#f5d0a0",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    hairStyle:'<ellipse cx="40" cy="20" rx="12" ry="7" fill="#0d0806"/>'},
+  {name:"배준호",country:"대한민국",flag:"🇰🇷",num:"12",skin:"#f5d0a0",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    mouth:'M36,46 Q40,50 44,46'},
+  {name:"양현준",country:"대한민국",flag:"🇰🇷",num:"17",skin:"#f5c888",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff",
+    hairStyle:'<path d="M28,22 Q33,15 40,16 Q47,15 52,22" fill="#0d0806"/>'},
+  {name:"이기혁",country:"대한민국",flag:"🇰🇷",num:"22",skin:"#f5c888",hair:"#0d0806",kit1:"#C60C30",kit2:"#fff"},
+];
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+let bracket=[],cur=0,winners=[],done=0;
+const TOTAL=63;
+
+function getRound(n){
+  if(n>=64)return"64강";if(n>=32)return"32강";if(n>=16)return"16강";
+  if(n>=8)return"8강";if(n>=4)return"4강";if(n>=2)return"결승";return "우승";
+}
+
+function start(){bracket=shuffle(players);cur=0;winners=[];done=0;render()}
+
+function render(){
+  const area=document.getElementById('area');
+  const prog=document.getElementById('prog');
+  const rlbl=document.getElementById('rlbl');
+  const stats=document.getElementById('stats');
+  const hint=document.getElementById('hint');
+  prog.style.width=(done/TOTAL*100).toFixed(1)+'%';
+  if(bracket.length===1){endScreen(bracket[0]);hint.textContent='';return;}
+  const p1=bracket[cur*2],p2=bracket[cur*2+1];
+  const total=Math.floor(bracket.length/2);
+  rlbl.textContent=getRound(bracket.length)+' · '+(cur+1)+'/'+total;
+  hint.textContent='더 마음에 드는 선수를 골라주세요!';
+  stats.innerHTML=
+    '<div class="stat"><div class="stat-n">'+bracket.length+'</div><div class="stat-l">남은 선수</div></div>'+
+    '<div class="stat"><div class="stat-n">'+done+'</div><div class="stat-l">완료 경기</div></div>'+
+    '<div class="stat"><div class="stat-n">'+(TOTAL-done)+'</div><div class="stat-l">남은 경기</div></div>';
+  area.innerHTML='<div class="matchup">'+card(p1,0)+'<div class="vs">vs</div>'+card(p2,1)+'</div>';
+}
+
+function card(p,idx){
+  return '<button class="pbtn" id="b'+idx+'" onclick="pick('+idx+')">'+
+    makeSVG(p)+
+    '<div class="pname">'+p.name+'</div>'+
+    '<div class="pcountry">'+p.country+' '+p.flag+'</div>'+
+  '</button>';
+}
+
+function pick(idx){
+  const b0=document.getElementById('b0'),b1=document.getElementById('b1');
+  idx===0?(b0.classList.add('win'),b1.classList.add('lose')):(b1.classList.add('win'),b0.classList.add('lose'));
+  setTimeout(()=>{
+    const chosen=bracket[cur*2+idx];
+    winners.push(chosen);cur++;done++;
+    if(cur>=Math.floor(bracket.length/2)){
+      if(bracket.length%2===1)winners.push(bracket[bracket.length-1]);
+      bracket=[...winners];winners=[];cur=0;
+    }
+    render();
+  },300);
+}
+
+function endScreen(p){
+  document.getElementById('rlbl').textContent='🏆 최종 우승';
+  document.getElementById('stats').innerHTML='';
+  document.getElementById('prog').style.width='100%';
+  document.getElementById('hint').textContent='';
+  document.getElementById('area').innerHTML=
+    '<div class="result-box">'+
+      '<div class="trophy">🏆</div>'+
+      '<div class="res-label">나의 이상형은...</div>'+
+      '<div style="display:flex;justify-content:center;margin:8px 0">'+makeSVG({...p,num:p.num})+'</div>'+
+      '<div class="res-name">'+p.name+'</div>'+
+      '<div class="res-country">'+p.country+' '+p.flag+'</div>'+
+      '<button class="restart-btn" onclick="done=0;start()">다시 하기 ↺</button>'+
+    '</div>';
+}
+
+start();
+</script>
+</body>
+</html>
