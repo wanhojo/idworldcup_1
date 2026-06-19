@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 월드컵 스타 이상형 월드컵</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f5f7fa;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.5rem 1rem}
+  .app{width:100%;max-width:540px}
+  .header{text-align:center;margin-bottom:1.25rem}
+  .header h1{font-size:22px;font-weight:600;color:#111}
+  .header p{font-size:13px;color:#888;margin-top:4px}
+  .prog-wrap{background:#e0e0e0;border-radius:99px;height:6px;margin:0.75rem 0 0.5rem;overflow:hidden}
+  .prog-fill{height:6px;background:#185FA5;border-radius:99px;transition:width 0.4s}
+  .round-lbl{text-align:center;font-size:11px;font-weight:600;color:#888;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.75rem}
+  .stats{display:flex;justify-content:center;gap:28px;margin-bottom:1rem}
+  .stat{text-align:center}
+  .stat-n{font-size:20px;font-weight:600;color:#111}
+  .stat-l{font-size:11px;color:#888}
+  .matchup{display:grid;grid-template-columns:1fr 36px 1fr;gap:10px;align-items:center}
+  .pbtn{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:18px 10px;cursor:pointer;text-align:center;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+  .pbtn:hover{border-color:#185FA5;transform:translateY(-2px);box-shadow:0 4px 16px rgba(24,95,165,0.12)}
+  .pbtn:active{transform:translateY(0)}
+  .pbtn.win{border:2.5px solid #185FA5;background:#EBF4FD}
+  .pbtn.lose{opacity:0.28;pointer-events:none}
+  .avatar{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;border:1.5px solid rgba(0,0,0,0.07)}
+  .pname{font-size:14px;font-weight:600;color:#111;line-height:1.3}
+  .pcountry{font-size:11px;color:#888}
+  .vs{text-align:center;font-size:12px;font-weight:600;color:#bbb}
+  .hint{text-align:center;font-size:12px;color:#aaa;margin-top:10px}
+  .result-box{text-align:center;padding:2.5rem 1rem 2rem;background:#fff;border-radius:20px;border:1.5px solid #e0e0e0;margin-top:0.5rem;box-shadow:0 4px 24px rgba(0,0,0,0.06)}
+  .res-avatar{width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:52px;margin:0 auto 16px;border:3.5px solid #185FA5;background:#EBF4FD}
+  .res-label{font-size:13px;color:#aaa;margin-bottom:8px}
+  .res-name{font-size:28px;font-weight:700;color:#185FA5;margin:4px 0}
+  .res-country{font-size:14px;color:#888;margin-bottom:20px}
+  .trophy{font-size:40px;margin-bottom:8px}
+  .restart-btn{background:#185FA5;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer;color:#fff}
+  .restart-btn:hover{background:#0d4a8a}
+  @media(max-width:400px){
+    .avatar{width:62px;height:62px;font-size:28px}
+    .pname{font-size:13px}
+    .pbtn{padding:14px 8px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>⚽ 월드컵 스타 이상형 월드컵</h1>
+    <p>전세계 64인의 슈퍼스타 · 2026 FIFA 월드컵</p>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div class="round-lbl" id="rlbl"></div>
+  <div class="stats" id="stats"></div>
+  <div id="area"></div>
+  <div class="hint" id="hint">더 마음에 드는 선수를 골라주세요!</div>
+</div>
+
+<script>
+const players = [
+  {name:"리오넬 메시",country:"아르헨티나 🇦🇷",avatar:"🐐",color:"#D4EDD4"},
+  {name:"크리스티아누 호날두",country:"포르투갈 🇵🇹",avatar:"⚡",color:"#D4E6F1"},
+  {name:"킬리안 음바페",country:"프랑스 🇫🇷",avatar:"🚀",color:"#D6EAF8"},
+  {name:"에를링 홀란",country:"노르웨이 🇳🇴",avatar:"💪",color:"#D5F5E3"},
+  {name:"라미네 야말",country:"스페인 🇪🇸",avatar:"✨",color:"#FDEDEC"},
+  {name:"비니시우스 주니오르",country:"브라질 🇧🇷",avatar:"🔥",color:"#FDEBD0"},
+  {name:"주드 벨링엄",country:"잉글랜드 󠁧󠁢󠁥󠁮󠁧󠁿",avatar:"👑",color:"#EBF5FB"},
+  {name:"해리 케인",country:"잉글랜드 󠁧󠁢󠁥󠁮󠁧󠁿",avatar:"🎯",color:"#EBF5FB"},
+  {name:"손흥민",country:"대한민국 🇰🇷",avatar:"🦅",color:"#FDEDEC"},
+  {name:"이강인",country:"대한민국 🇰🇷",avatar:"🌟",color:"#FDEDEC"},
+  {name:"부카요 사카",country:"잉글랜드 󠁧󠁢󠁥󠁮󠁧󠁿",avatar:"⚡",color:"#EBF5FB"},
+  {name:"필 포든",country:"잉글랜드 󠁧󠁢󠁥󠁮󠁧󠁿",avatar:"🎨",color:"#EBF5FB"},
+  {name:"자말 무시알라",country:"독일 🇩🇪",avatar:"🦋",color:"#F9EBEA"},
+  {name:"플로리안 비르츠",country:"독일 🇩🇪",avatar:"💫",color:"#F9EBEA"},
+  {name:"로드리",country:"스페인 🇪🇸",avatar:"🧠",color:"#FDEDEC"},
+  {name:"페드리",country:"스페인 🇪🇸",avatar:"🎭",color:"#FDEDEC"},
+  {name:"로베르트 레반도프스키",country:"폴란드 🇵🇱",avatar:"🏹",color:"#FDFEFE"},
+  {name:"케빈 더브라위너",country:"벨기에 🇧🇪",avatar:"🎯",color:"#FEF9E7"},
+  {name:"루카 모드리치",country:"크로아티아 🇭🇷",avatar:"🎩",color:"#FDEDEC"},
+  {name:"마르틴 외데고르",country:"노르웨이 🇳🇴",avatar:"❄️",color:"#D5F5E3"},
+  {name:"브루노 페르난데스",country:"포르투갈 🇵🇹",avatar:"⚽",color:"#D4E6F1"},
+  {name:"라파엘 레오",country:"포르투갈 🇵🇹",avatar:"🐆",color:"#D4E6F1"},
+  {name:"앙투안 그리즈만",country:"프랑스 🇫🇷",avatar:"🦊",color:"#D6EAF8"},
+  {name:"마이클 올리스",country:"프랑스 🇫🇷",avatar:"🌀",color:"#D6EAF8"},
+  {name:"아우렐리엔 추아메니",country:"프랑스 🇫🇷",avatar:"🛡️",color:"#D6EAF8"},
+  {name:"오우스만 뎀벨레",country:"프랑스 🇫🇷",avatar:"⚡",color:"#D6EAF8"},
+  {name:"네이마르",country:"브라질 🇧🇷",avatar:"🎪",color:"#FDEBD0"},
+  {name:"호드리구",country:"브라질 🇧🇷",avatar:"🌠",color:"#FDEBD0"},
+  {name:"엔드리크",country:"브라질 🇧🇷",avatar:"🌱",color:"#FDEBD0"},
+  {name:"가브리엘 마르티넬리",country:"브라질 🇧🇷",avatar:"🏃",color:"#FDEBD0"},
+  {name:"에밀리아노 마르티네스",country:"아르헨티나 🇦🇷",avatar:"🧤",color:"#D4EDD4"},
+  {name:"앙헬 디 마리아",country:"아르헨티나 🇦🇷",avatar:"🕊️",color:"#D4EDD4"},
+  {name:"파울로 디발라",country:"아르헨티나 🇦🇷",avatar:"💎",color:"#D4EDD4"},
+  {name:"알레한드로 가르나초",country:"아르헨티나 🇦🇷",avatar:"🦅",color:"#D4EDD4"},
+  {name:"모하메드 살라",country:"이집트 🇪🇬",avatar:"🔱",color:"#FEF9E7"},
+  {name:"사디오 마네",country:"세네갈 🇸🇳",avatar:"🦁",color:"#FEF9E7"},
+  {name:"버질 반 다이크",country:"네덜란드 🇳🇱",avatar:"🏰",color:"#FEF9E7"},
+  {name:"코디 각포",country:"네덜란드 🇳🇱",avatar:"🌪️",color:"#FEF9E7"},
+  {name:"멤피스 데파이",country:"네덜란드 🇳🇱",avatar:"🎯",color:"#FEF9E7"},
+  {name:"잔루이지 도나룸마",country:"이탈리아 🇮🇹",avatar:"🧱",color:"#FDFEFE"},
+  {name:"그라닛 자카",country:"스위스 🇨🇭",avatar:"⛰️",color:"#FDFEFE"},
+  {name:"레로이 사네",country:"독일 🇩🇪",avatar:"💨",color:"#F9EBEA"},
+  {name:"크리스티안 풀리식",country:"미국 🇺🇸",avatar:"🦅",color:"#EAF2FF"},
+  {name:"아르다 귈러",country:"튀르키예 🇹🇷",avatar:"🌙",color:"#FDEDEC"},
+  {name:"티아고 실바",country:"브라질 🇧🇷",avatar:"🛡️",color:"#FDEBD0"},
+  {name:"루벤 디아스",country:"포르투갈 🇵🇹",avatar:"🏔️",color:"#D4E6F1"},
+  {name:"이반 페리시치",country:"크로아티아 🇭🇷",avatar:"🦅",color:"#FDEDEC"},
+  {name:"로멜루 루카쿠",country:"벨기에 🇧🇪",avatar:"🐘",color:"#FEF9E7"},
+  {name:"김민재",country:"대한민국 🇰🇷",avatar:"🗿",color:"#FDEDEC"},
+  {name:"황희찬",country:"대한민국 🇰🇷",avatar:"⚡",color:"#FDEDEC"},
+  {name:"황인범",country:"대한민국 🇰🇷",avatar:"🎯",color:"#FDEDEC"},
+  {name:"배준호",country:"대한민국 🇰🇷",avatar:"🌟",color:"#FDEDEC"},
+  {name:"양현준",country:"대한민국 🇰🇷",avatar:"🦋",color:"#FDEDEC"},
+  {name:"이기혁",country:"대한민국 🇰🇷",avatar:"💥",color:"#FDEDEC"},
+  {name:"마르쿠스 라쇼포드",country:"잉글랜드 󠁧󠁢󠁥󠁮󠁧󠁿",avatar:"🏃",color:"#EBF5FB"},
+  {name:"가비",country:"스페인 🇪🇸",avatar:"🔴",color:"#FDEDEC"},
+  {name:"알바로 모라타",country:"스페인 🇪🇸",avatar:"⚔️",color:"#FDEDEC"},
+  {name:"토마스 뮐러",country:"독일 🇩🇪",avatar:"🦊",color:"#F9EBEA"},
+  {name:"마르쿠스 튀람",country:"프랑스 🇫🇷",avatar:"🦍",color:"#D6EAF8"},
+  {name:"리야드 마흐레즈",country:"알제리 🇩🇿",avatar:"🌟",color:"#FEF9E7"},
+  {name:"페데리코 키에사",country:"이탈리아 🇮🇹",avatar:"🎯",color:"#FDFEFE"},
+  {name:"니콜로 바렐라",country:"이탈리아 🇮🇹",avatar:"🎭",color:"#FDFEFE"},
+  {name:"올리비에 지루",country:"프랑스 🇫🇷",avatar:"🏆",color:"#D6EAF8"},
+  {name:"기예르모 오초아",country:"멕시코 🇲🇽",avatar:"🧤",color:"#D5F5E3"},
+  {name:"크리스티안 가메이로",country:"미국 🇺🇸",avatar:"⭐",color:"#EAF2FF"},
+];
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+let bracket=[],cur=0,winners=[],done=0;
+const TOTAL=63;
+
+function getRound(n){
+  if(n>=64)return"64강";if(n>=32)return"32강";if(n>=16)return"16강";
+  if(n>=8)return"8강";if(n>=4)return"4강";if(n>=2)return"결승";return"우승";
+}
+
+function start(){bracket=shuffle(players);cur=0;winners=[];done=0;render()}
+
+function render(){
+  const area=document.getElementById('area');
+  const prog=document.getElementById('prog');
+  const rlbl=document.getElementById('rlbl');
+  const stats=document.getElementById('stats');
+  const hint=document.getElementById('hint');
+  prog.style.width=(done/TOTAL*100).toFixed(1)+'%';
+  if(bracket.length===1){endScreen(bracket[0]);hint.textContent='';return;}
+  const p1=bracket[cur*2],p2=bracket[cur*2+1];
+  const total=Math.floor(bracket.length/2);
+  rlbl.textContent=getRound(bracket.length)+' · '+(cur+1)+'/'+total;
+  hint.textContent='더 마음에 드는 선수를 골라주세요!';
+  stats.innerHTML=
+    '<div class="stat"><div class="stat-n">'+bracket.length+'</div><div class="stat-l">남은 선수</div></div>'+
+    '<div class="stat"><div class="stat-n">'+done+'</div><div class="stat-l">완료 경기</div></div>'+
+    '<div class="stat"><div class="stat-n">'+(TOTAL-done)+'</div><div class="stat-l">남은 경기</div></div>';
+  area.innerHTML=
+    '<div class="matchup">'+
+      card(p1,0)+
+      '<div class="vs">vs</div>'+
+      card(p2,1)+
+    '</div>';
+}
+
+function card(p,idx){
+  return '<button class="pbtn" id="b'+idx+'" onclick="pick('+idx+')">'+
+    '<div class="avatar" style="background:'+p.color+'">'+p.avatar+'</div>'+
+    '<div class="pname">'+p.name+'</div>'+
+    '<div class="pcountry">'+p.country+'</div>'+
+  '</button>';
+}
+
+function pick(idx){
+  const b0=document.getElementById('b0');
+  const b1=document.getElementById('b1');
+  idx===0?(b0.classList.add('win'),b1.classList.add('lose')):(b1.classList.add('win'),b0.classList.add('lose'));
+  setTimeout(()=>{
+    const chosen=bracket[cur*2+idx];
+    winners.push(chosen);cur++;done++;
+    const total=Math.floor(bracket.length/2);
+    if(cur>=total){
+      if(bracket.length%2===1)winners.push(bracket[bracket.length-1]);
+      bracket=[...winners];winners=[];cur=0;
+    }
+    render();
+  },300);
+}
+
+function endScreen(p){
+  document.getElementById('rlbl').textContent='🏆 최종 우승';
+  document.getElementById('stats').innerHTML='';
+  document.getElementById('prog').style.width='100%';
+  document.getElementById('area').innerHTML=
+    '<div class="result-box">'+
+      '<div class="trophy">🏆</div>'+
+      '<div class="res-label">나의 이상형은...</div>'+
+      '<div class="res-avatar" style="background:'+p.color+'">'+p.avatar+'</div>'+
+      '<div class="res-name">'+p.name+'</div>'+
+      '<div class="res-country">'+p.country+'</div>'+
+      '<button class="restart-btn" onclick="done=0;start()">다시 하기 ↺</button>'+
+    '</div>';
+}
+
+start();
+</script>
+</body>
+</html>
